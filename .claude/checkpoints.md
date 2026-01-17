@@ -1,5 +1,52 @@
 # STL101 Checkpoints
 
+## R101-004 - 2026-01-18T02:00:00
+
+**Summary:** Underdesk cable tray with T-slot rail frame mounting
+
+**Goal:** Create an enclosed underdesk cable organizer with modern ribbed texture, slide-in mounting system, and cable pass-through slots.
+
+**Status:** Complete
+
+**Changes:**
+1. Created new parametric generator `generate_cable_tray.py` for underdesk organizer
+2. Designed enclosed tray with end walls and 50x30mm cable slot notches (open at top)
+3. Implemented T-profile rails on tray sides that slide into rail frame
+4. Created single rail frame with T-slots, cross beams, and screw bosses
+5. Added horizontal ribbed texture (4mm spacing) on tray exterior
+6. Multiple iterations to fix T-slot orientation, connections, and tolerances
+
+**Files modified:**
+1. UNDERDESK ORGANIZER/generate_cable_tray.py - Parametric generator script
+2. UNDERDESK ORGANIZER/cable_tray.stl - Final tray with T-profiles
+3. UNDERDESK ORGANIZER/rail_frame.stl - Mounting frame with T-slots
+4. UNDERDESK ORGANIZER/enclosed_cable_tray.stl - Earlier iteration
+5. UNDERDESK ORGANIZER/mounting_bracket.stl - Earlier bracket design (superseded)
+
+**Commits:**
+1. 7216ee9 - Add rib grid to prevent front plate sag, optimize to 0.8mm
+2. 0fd52a1 - Initial commit: Rain101 wall mount for 3D printing
+
+**Key decisions:**
+1. T-slot slide-in system chosen over separate brackets - single frame piece is more rigid
+2. Tray dimensions: 120mm wide x 220mm long x 58mm deep (inner 55mm)
+3. T-profile: 4mm neck x 2mm, 10mm head x 1.5mm - minimal material
+4. Frame T-slot: 5mm slot, 11mm cavity - 0.5mm clearance for comfortable fit
+5. Cable slots 50x30mm at both ends, open at top (notch style) for easy cable routing
+6. Screw bosses (8mm tall, 12mm dia) added to thin rails for proper countersink depth
+7. Cross beams thin (1.5mm) same as T-slot roof to save material
+8. Horizontal ribbed texture for modern aesthetic (4mm spacing, 1.2mm depth)
+
+**Blockers:** None
+
+**Next steps:**
+1. Test print both pieces and verify fit
+2. Adjust T-slot tolerances if too tight/loose
+3. Mount to desk and test cable routing
+4. Consider adding cable tie slots or velcro mounting points inside tray
+
+---
+
 ## R101-003 - 2026-01-16T05:45:00
 
 **Summary:** Optimized ribs to 0.8mm, weight reduction complete

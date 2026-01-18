@@ -17,13 +17,13 @@ import numpy as np
 # ============================================
 
 # Main tray dimensions
-TRAY_LENGTH = 220.0      # mm (along desk, front-to-back openings)
+TRAY_LENGTH = 200.0      # mm (along desk, front-to-back openings)
 TRAY_WIDTH = 120.0       # mm (side to side)
 TRAY_DEPTH = 55.0        # mm (height/depth of tray cavity)
 
-# Wall thickness
-WALL_THICKNESS = 2.5     # mm (all walls)
-BOTTOM_THICKNESS = 3.0   # mm (bottom is thicker for rigidity)
+# Wall thickness - matches T-neck width so they print as one piece
+WALL_THICKNESS = 3.0     # mm (same as RAIL_NECK_WIDTH)
+BOTTOM_THICKNESS = 2.0   # mm (bottom thickness)
 
 # Ribbed texture settings
 RIB_SPACING = 4.0        # mm (center-to-center distance between ribs)
@@ -34,35 +34,43 @@ RIB_WIDTH = 2.0          # mm (width of each rib)
 CORNER_RADIUS = 3.0      # mm (rounded corners on tray)
 
 # T-slot slide-in mounting system
-# Rail dimensions (T-shape: narrow neck + wide head) - minimal design
-RAIL_NECK_WIDTH = 4.0        # mm (narrow part that goes through slot)
-RAIL_NECK_HEIGHT = 2.0       # mm (height of neck - thinner)
-RAIL_HEAD_WIDTH = 10.0       # mm (wide part that gets captured - narrower)
-RAIL_HEAD_HEIGHT = 1.5       # mm (height of head - thinner)
-RAIL_LENGTH = 30.0           # mm (length of each rail section - shorter)
-RAIL_INSET = 10.0            # mm (distance from tray edge to rail center)
-RAIL_POSITIONS = [30.0, 190.0]  # mm (Y positions along length)
-RAIL_PAD_WIDTH = 15.0        # mm (width of mounting pad - smaller)
+# Rail dimensions (T-shape: narrow neck + chamfered head) - full length design
+RAIL_NECK_WIDTH = 3.0        # mm (narrow part - matches wall thickness)
+RAIL_NECK_HEIGHT = 4.0       # mm (height of neck - increased for tolerance)
+RAIL_HEAD_WIDTH = 10.0       # mm (wide part that gets captured at top)
+RAIL_CHAMFER_HEIGHT = 3.0    # mm (45° chamfer from neck to head width)
+RAIL_HEAD_FLAT = 0.5         # mm (flat top portion of head)
+# T-profiles now run the full length of the tray for better load distribution
+# Head is trapezoidal: starts at neck width, chamfers out to head width at 45°
 
 # Rail frame (single piece that mounts to desk)
+# Frame dimensions - calculated to match tray T-profile positions
+# T-profiles are centered on tray walls at: x = WALL_THICKNESS/2 and x = TRAY_WIDTH - WALL_THICKNESS/2
+# Distance between T-profiles = TRAY_WIDTH - WALL_THICKNESS = 117.5mm
+# Frame T-slots should be at the same distance apart
 FRAME_SCREW_HOLE = 4.5       # mm (for #8 wood screws)
 FRAME_COUNTERSINK = 9.0      # mm (screw head recess)
-FRAME_RAIL_WIDTH = 15.0      # mm (width of each side rail)
-FRAME_RAIL_HEIGHT = 6.0      # mm (height/thickness of rails)
+FRAME_RAIL_WIDTH = 12.0      # mm (width of each side rail)
+FRAME_RAIL_HEIGHT = 12.0     # mm (height/thickness of rails - increased for deeper T-slot)
+# T-slot centered in rail, screws on cross beams
 FRAME_BEAM_WIDTH = 12.0      # mm (width of cross beams)
 FRAME_BEAM_HEIGHT = 4.0      # mm (height of cross beams - thinner than rails)
 FRAME_SLOT_WIDTH = 5.0       # mm (comfortable fit for 4mm neck - 0.5mm clearance each side)
 FRAME_CAVITY_WIDTH = 11.0    # mm (comfortable fit for 10mm head - 0.5mm clearance each side)
-FRAME_CAVITY_HEIGHT = 2.0    # mm (comfortable fit for 1.5mm head - 0.5mm clearance)
+FRAME_CAVITY_HEIGHT = 4.0    # mm (comfortable fit for 3.5mm chamfered head - 0.5mm clearance)
 FRAME_SLOT_HEIGHT = 2.5      # mm (comfortable fit for 2mm neck - 0.5mm clearance)
+# Frame cavity is trapezoidal to match chamfered T-profile head
 FRAME_STOP_THICKNESS = 2.5   # mm (wall at one end to stop tray)
 FRAME_LENGTH = 180.0         # mm (length of frame, slightly shorter than tray)
-FRAME_WIDTH = 100.0          # mm (distance between outer edges of rails)
+# Frame width calculated so T-slots align with tray T-profiles
+# T-slot distance = FRAME_WIDTH - FRAME_RAIL_WIDTH should equal T-profile distance
+# T-profile distance = TRAY_WIDTH - WALL_THICKNESS
+FRAME_WIDTH = TRAY_WIDTH - WALL_THICKNESS + FRAME_RAIL_WIDTH  # ~129.5mm
 
 # End walls with cable slots
 END_WALL_THICKNESS = 2.5     # mm
-CABLE_SLOT_WIDTH = 50.0      # mm (width of cable slot)
-CABLE_SLOT_HEIGHT = 30.0     # mm (height of slot, open at top)
+CABLE_SLOT_WIDTH = 25.0      # mm (width of cable slot)
+CABLE_SLOT_HEIGHT = 20.0     # mm (height of slot, open at top)
 
 # Cross beam positions along frame length (as ratio of frame length)
 FRAME_BEAM_POSITIONS = [0.0, 0.5, 1.0]  # Front, middle, back
@@ -97,6 +105,114 @@ def create_cylinder_x(radius, length, x=0, y=0, z=0, segments=32):
     cyl.apply_transform(rotation)
     cyl.apply_translation([x + length/2, y, z])
     return cyl
+
+def create_t_profile_upright(neck_width, neck_height, head_width, chamfer_height, head_flat, length, x=0, y=0, z=0):
+    """
+    Create an upright T-profile with chamfered head, pointing UP.
+    Built from boxes with wedges subtracted for 45° chamfer.
+    """
+    parts = []
+
+    # Neck - narrow vertical part
+    neck = create_box(neck_width, length, neck_height,
+                      x - neck_width/2, y, z)
+    parts.append(neck)
+
+    # Head block - full width, includes chamfer zone + flat top
+    head_total_height = chamfer_height + head_flat
+    head = create_box(head_width, length, head_total_height,
+                      x - head_width/2, y, z + neck_height)
+    parts.append(head)
+
+    # Combine neck and head first
+    result = parts[0]
+    for part in parts[1:]:
+        try:
+            result = trimesh.boolean.union([result, part], engine='manifold')
+        except:
+            result = trimesh.util.concatenate([result, part])
+
+    # Now subtract wedges to create 45° chamfer
+    # Wedge on left side: triangle that removes material from left corner
+    # Wedge on right side: triangle that removes material from right corner
+    overhang = (head_width - neck_width) / 2  # How much head overhangs neck on each side
+
+    # Create wedge using a rotated box (approximation) or prism
+    # For 45° chamfer: overhang = chamfer_height
+    # We'll create a triangular prism by subtracting
+
+    # Left wedge - remove corner where head overhangs left of neck
+    # This is a box that we position to cut the corner
+    # Actually, let's use a proper triangular prism
+
+    from shapely.geometry import Polygon as ShapelyPolygon
+
+    # Left chamfer wedge (triangle in XZ, extruded along Y)
+    left_wedge_points = [
+        (x - head_width/2, z + neck_height),                    # bottom-left of head
+        (x - neck_width/2, z + neck_height),                    # where neck meets head
+        (x - neck_width/2, z + neck_height + chamfer_height),   # top of chamfer at neck edge
+        (x - head_width/2, z + neck_height),                    # back to start
+    ]
+    # Simplify to triangle
+    left_triangle = ShapelyPolygon([
+        (-head_width/2, 0),           # outer bottom corner
+        (-neck_width/2, 0),           # inner bottom (neck edge)
+        (-neck_width/2, chamfer_height),  # inner top (neck edge + chamfer)
+    ])
+    left_wedge = trimesh.creation.extrude_polygon(left_triangle, height=length)
+    # Rotate and position
+    rotation = trimesh.transformations.rotation_matrix(-np.pi/2, [1, 0, 0])
+    left_wedge.apply_transform(rotation)
+    left_wedge.apply_translation([x, y, z + neck_height])
+
+    # Right chamfer wedge (mirror of left)
+    right_triangle = ShapelyPolygon([
+        (head_width/2, 0),            # outer bottom corner
+        (neck_width/2, 0),            # inner bottom (neck edge)
+        (neck_width/2, chamfer_height),   # inner top (neck edge + chamfer)
+    ])
+    right_wedge = trimesh.creation.extrude_polygon(right_triangle, height=length)
+    right_wedge.apply_transform(rotation)
+    right_wedge.apply_translation([x, y, z + neck_height])
+
+    # Subtract wedges to create chamfer
+    try:
+        result = trimesh.boolean.difference([result, left_wedge], engine='manifold')
+        result = trimesh.boolean.difference([result, right_wedge], engine='manifold')
+    except Exception as e:
+        print(f"  Warning: Chamfer subtraction failed: {e}")
+
+    return result
+
+def create_t_slot_downward(slot_width, slot_height, cavity_width, cavity_height, chamfer_height, length, x=0, y=0, z=0):
+    """
+    Create a downward-opening T-slot for subtracting from frame rail underside.
+    Built from simple boxes - slot + cavity.
+
+    Opens at z, extends upward into the rail.
+    """
+    parts = []
+
+    # Narrow slot at bottom (opening)
+    slot = create_box(slot_width, length, slot_height + 1,  # +1 to cut through bottom
+                      x - slot_width/2, y, z - 1)
+    parts.append(slot)
+
+    # Wide cavity above (captures T head)
+    # Include chamfer zone in cavity for simplicity
+    total_cavity = chamfer_height + cavity_height
+    cavity = create_box(cavity_width, length, total_cavity,
+                        x - cavity_width/2, y, z + slot_height)
+    parts.append(cavity)
+
+    # Combine slot and cavity
+    try:
+        result = trimesh.boolean.union(parts, engine='manifold')
+    except:
+        result = trimesh.util.concatenate(parts)
+
+    return result
 
 # ============================================
 # Main generation functions
@@ -244,88 +360,51 @@ def generate_ribs():
 
 
 def generate_tray_rails():
-    """Generate T-shaped rails with mounting pads on top of side walls."""
+    """Generate full-length upright T-profiles on top of side walls."""
 
     rails = []
-    wall_top = TRAY_DEPTH + BOTTOM_THICKNESS  # Top of side walls
-    total_rail_height = RAIL_NECK_HEIGHT + RAIL_HEAD_HEIGHT
+    rail_length = TRAY_LENGTH  # Full length of tray
+    wall_top = TRAY_DEPTH + BOTTOM_THICKNESS  # Z position of wall top
 
-    print(f"Generating T-rails: neck {RAIL_NECK_WIDTH}x{RAIL_NECK_HEIGHT}mm, head {RAIL_HEAD_WIDTH}x{RAIL_HEAD_HEIGHT}mm")
-    print(f"Rail positions along length: {RAIL_POSITIONS}")
-    print(f"Mounting pads: {RAIL_PAD_WIDTH}mm wide, connecting to side walls")
+    total_t_height = RAIL_NECK_HEIGHT + RAIL_CHAMFER_HEIGHT + RAIL_HEAD_FLAT
 
-    for y_pos in RAIL_POSITIONS:
-        # Left side rail (sits on left wall)
-        left_x = WALL_THICKNESS / 2  # Center of left wall
+    print(f"Generating full-length upright T-rails:")
+    print(f"  Neck: {RAIL_NECK_WIDTH}mm wide x {RAIL_NECK_HEIGHT}mm tall")
+    print(f"  Head: {RAIL_HEAD_WIDTH}mm wide (with {RAIL_CHAMFER_HEIGHT}mm chamfer)")
+    print(f"  Total height: {total_t_height}mm")
+    print(f"  Wall thickness: {WALL_THICKNESS}mm (same as neck = one piece)")
+    print(f"  Rail length: {rail_length}mm (full tray length)")
 
-        # Mounting pad (sits on top of wall, connects rail to tray)
-        left_pad = create_box(
-            WALL_THICKNESS + 2,  # Slightly wider than wall for good bond
-            RAIL_PAD_WIDTH,
-            RAIL_NECK_HEIGHT,  # Same height as neck base
-            0,
-            y_pos - RAIL_PAD_WIDTH / 2,
-            wall_top
-        )
-        rails.append(left_pad)
+    # Left side rail - on top of left wall, centered on wall
+    # Wall thickness = neck width, so they're naturally one piece
+    left_x = WALL_THICKNESS / 2  # Center of left wall
+    left_rail = create_t_profile_upright(
+        neck_width=RAIL_NECK_WIDTH,
+        neck_height=RAIL_NECK_HEIGHT,
+        head_width=RAIL_HEAD_WIDTH,
+        chamfer_height=RAIL_CHAMFER_HEIGHT,
+        head_flat=RAIL_HEAD_FLAT,
+        length=rail_length,
+        x=left_x,
+        y=0,
+        z=wall_top  # Sits on top of wall
+    )
+    rails.append(left_rail)
 
-        # Neck (narrow part)
-        left_neck = create_box(
-            RAIL_NECK_WIDTH,
-            RAIL_LENGTH,
-            RAIL_NECK_HEIGHT,
-            left_x - RAIL_NECK_WIDTH / 2,
-            y_pos - RAIL_LENGTH / 2,
-            wall_top
-        )
-        rails.append(left_neck)
-
-        # Head (wide part, gets captured)
-        left_head = create_box(
-            RAIL_HEAD_WIDTH,
-            RAIL_LENGTH,
-            RAIL_HEAD_HEIGHT,
-            left_x - RAIL_HEAD_WIDTH / 2,
-            y_pos - RAIL_LENGTH / 2,
-            wall_top + RAIL_NECK_HEIGHT
-        )
-        rails.append(left_head)
-
-        # Right side rail (sits on right wall)
-        right_x = TRAY_WIDTH - WALL_THICKNESS / 2  # Center of right wall
-
-        # Mounting pad
-        right_pad = create_box(
-            WALL_THICKNESS + 2,
-            RAIL_PAD_WIDTH,
-            RAIL_NECK_HEIGHT,
-            TRAY_WIDTH - WALL_THICKNESS - 1,
-            y_pos - RAIL_PAD_WIDTH / 2,
-            wall_top
-        )
-        rails.append(right_pad)
-
-        # Neck
-        right_neck = create_box(
-            RAIL_NECK_WIDTH,
-            RAIL_LENGTH,
-            RAIL_NECK_HEIGHT,
-            right_x - RAIL_NECK_WIDTH / 2,
-            y_pos - RAIL_LENGTH / 2,
-            wall_top
-        )
-        rails.append(right_neck)
-
-        # Head
-        right_head = create_box(
-            RAIL_HEAD_WIDTH,
-            RAIL_LENGTH,
-            RAIL_HEAD_HEIGHT,
-            right_x - RAIL_HEAD_WIDTH / 2,
-            y_pos - RAIL_LENGTH / 2,
-            wall_top + RAIL_NECK_HEIGHT
-        )
-        rails.append(right_head)
+    # Right side rail - on top of right wall, centered on wall
+    right_x = TRAY_WIDTH - WALL_THICKNESS / 2  # Center of right wall
+    right_rail = create_t_profile_upright(
+        neck_width=RAIL_NECK_WIDTH,
+        neck_height=RAIL_NECK_HEIGHT,
+        head_width=RAIL_HEAD_WIDTH,
+        chamfer_height=RAIL_CHAMFER_HEIGHT,
+        head_flat=RAIL_HEAD_FLAT,
+        length=rail_length,
+        x=right_x,
+        y=0,
+        z=wall_top  # Sits on top of wall
+    )
+    rails.append(right_rail)
 
     return rails
 
@@ -360,17 +439,17 @@ def generate_rail_frame():
     )
     parts.append(right_rail)
 
-    # Cross beams connecting the rails (thin, same as T-slot roof)
+    # Cross beams connecting the rails at the top
     beam_overlap = 5  # mm to extend into each rail
-    t_roof_thickness = FRAME_RAIL_HEIGHT - FRAME_SLOT_HEIGHT - FRAME_CAVITY_HEIGHT  # ~1.5mm
-    beam_z = FRAME_SLOT_HEIGHT + FRAME_CAVITY_HEIGHT  # Sits at top of rail (same level as T-roof)
+    beam_thickness = 3.0  # mm - thin but sturdy
+    beam_z = FRAME_RAIL_HEIGHT - beam_thickness  # At top of rail
 
     for pos_ratio in FRAME_BEAM_POSITIONS:
         y_pos = pos_ratio * (FRAME_LENGTH - FRAME_BEAM_WIDTH)
         beam = create_box(
             inner_width + 2 * beam_overlap,  # Extends into both rails
             FRAME_BEAM_WIDTH,
-            t_roof_thickness,  # Same thickness as T-slot roof
+            beam_thickness,
             FRAME_RAIL_WIDTH - beam_overlap,  # Start inside left rail
             y_pos,
             beam_z  # At top of rail
@@ -386,92 +465,81 @@ def generate_rail_frame():
         except:
             frame = trimesh.util.concatenate([frame, part])
 
-    # Subtract T-slots from both rails
-    # T-slot: narrow slot at bottom (open down & inward), wide cavity above (open inward)
-    # The slots must extend PAST the inner edge to be open on the inner face
+    # Subtract downward-opening T-slots from both rails
+    # T-slots are on the underside of the rails, opening DOWN
+    # Tray's upright T-profiles slide into these from one end
 
-    # Left rail T-slot (opens toward center/right)
-    # Slot and cavity extend from inside the rail to past the inner edge
-    left_cavity_start = FRAME_RAIL_WIDTH - FRAME_CAVITY_WIDTH + 2  # Start inside rail
+    # T-slot dimensions (match tray T-profile with clearance)
+    slot_width = RAIL_NECK_WIDTH + 1.0       # 5mm - slot width (4mm neck + clearance)
+    slot_height = RAIL_NECK_HEIGHT + 0.5     # 2.5mm - slot depth
+    cavity_width = RAIL_HEAD_WIDTH + 1.0     # 11mm - cavity width (10mm head + clearance)
+    cavity_height = RAIL_HEAD_FLAT + 0.5     # 1mm - cavity above chamfer
+    chamfer = RAIL_CHAMFER_HEIGHT + 0.5      # 3.5mm - chamfer height
 
-    # Narrow slot at bottom (open down and toward inner face)
-    left_slot = create_box(
-        FRAME_SLOT_WIDTH + 4,  # Wider to ensure it opens on inner face
-        FRAME_LENGTH - FRAME_STOP_THICKNESS + 1,
-        FRAME_SLOT_HEIGHT + 1,  # Extends through bottom
-        FRAME_RAIL_WIDTH - FRAME_SLOT_WIDTH - 1,  # Positioned to open on inner edge
-        FRAME_STOP_THICKNESS,
-        -0.5
-    )
-    # Wide cavity above (open toward inner face)
-    left_cavity = create_box(
-        FRAME_CAVITY_WIDTH + 2,  # Extends past inner edge
-        FRAME_LENGTH - FRAME_STOP_THICKNESS + 1,
-        FRAME_CAVITY_HEIGHT,
-        FRAME_RAIL_WIDTH - FRAME_CAVITY_WIDTH,  # Starts inside, extends past inner edge
-        FRAME_STOP_THICKNESS,
-        FRAME_SLOT_HEIGHT
-    )
+    total_slot_depth = slot_height + chamfer + cavity_height  # Total depth into rail
 
-    # Right rail T-slot (opens toward center/left)
-    right_rail_inner = FRAME_WIDTH - FRAME_RAIL_WIDTH  # Inner edge of right rail
+    slot_length = FRAME_LENGTH - FRAME_STOP_THICKNESS + 1  # Leave stop wall at one end
 
-    # Narrow slot at bottom
-    right_slot = create_box(
-        FRAME_SLOT_WIDTH + 4,
-        FRAME_LENGTH - FRAME_STOP_THICKNESS + 1,
-        FRAME_SLOT_HEIGHT + 1,
-        right_rail_inner - 3,  # Extends past inner edge (into center)
-        FRAME_STOP_THICKNESS,
-        -0.5
-    )
-    # Wide cavity above
-    right_cavity = create_box(
-        FRAME_CAVITY_WIDTH + 2,
-        FRAME_LENGTH - FRAME_STOP_THICKNESS + 1,
-        FRAME_CAVITY_HEIGHT,
-        right_rail_inner - 2,  # Extends past inner edge
-        FRAME_STOP_THICKNESS,
-        FRAME_SLOT_HEIGHT
+    print(f"Creating downward-opening T-slots:")
+    print(f"  Slot: {slot_width}mm wide x {slot_height}mm deep")
+    print(f"  Cavity: {cavity_width}mm wide (with {chamfer}mm chamfer)")
+    print(f"  Total depth: {total_slot_depth}mm")
+
+    # T-slot centered in rail (screws are on cross beams now)
+    # Left rail T-slot - centered, opening downward at Z=0
+    left_x = FRAME_RAIL_WIDTH / 2  # Center of left rail
+    left_t_slot = create_t_slot_downward(
+        slot_width=slot_width,
+        slot_height=slot_height,
+        cavity_width=cavity_width,
+        cavity_height=cavity_height,
+        chamfer_height=chamfer,
+        length=slot_length,
+        x=left_x,
+        y=FRAME_STOP_THICKNESS,
+        z=-0.1  # Slight overlap to ensure clean cut at bottom
     )
 
-    # Combine all slots
+    # Right rail T-slot - centered, opening downward at Z=0
+    right_x = FRAME_WIDTH - FRAME_RAIL_WIDTH / 2  # Center of right rail
+    right_t_slot = create_t_slot_downward(
+        slot_width=slot_width,
+        slot_height=slot_height,
+        cavity_width=cavity_width,
+        cavity_height=cavity_height,
+        chamfer_height=chamfer,
+        length=slot_length,
+        x=right_x,
+        y=FRAME_STOP_THICKNESS,
+        z=-0.1
+    )
+
+    # Combine and subtract all slots
     try:
-        all_slots = trimesh.boolean.union([left_cavity, left_slot, right_cavity, right_slot], engine='manifold')
+        all_slots = trimesh.boolean.union([left_t_slot, right_t_slot], engine='manifold')
         frame = trimesh.boolean.difference([frame, all_slots], engine='manifold')
     except Exception as e:
         print(f"  Warning: T-slot subtraction failed: {e}")
 
-    # Add screw bosses and holes in the rails
-    # Bosses are thicker pads around each screw for proper countersink
-    hole_x_left = FRAME_RAIL_WIDTH / 4  # In solid part of left rail
-    hole_x_right = FRAME_WIDTH - FRAME_RAIL_WIDTH / 4  # In solid part of right rail
+    # Add screw holes on the CROSS BEAMS (not rails, to avoid T-slot interference)
+    # Cross beams are at Y positions defined by FRAME_BEAM_POSITIONS
+    # Put TWO screw holes per beam (near each rail) = 6 total
 
-    hole_y_positions = [FRAME_LENGTH * 0.2, FRAME_LENGTH * 0.5, FRAME_LENGTH * 0.8]
+    screw_inset = 8.0  # mm from rail edge to screw center
+    hole_x_left = FRAME_RAIL_WIDTH + screw_inset  # Near left rail
+    hole_x_right = FRAME_WIDTH - FRAME_RAIL_WIDTH - screw_inset  # Near right rail
 
-    boss_height = 8.0  # Total height for countersink
-    boss_diameter = 12.0  # Diameter of boss
+    # Y positions match the cross beam positions
+    hole_y_positions = [pos * (FRAME_LENGTH - FRAME_BEAM_WIDTH) + FRAME_BEAM_WIDTH/2
+                        for pos in FRAME_BEAM_POSITIONS]
 
-    # First add bosses
-    for y_pos in hole_y_positions:
-        for x_pos in [hole_x_left, hole_x_right]:
-            boss = create_cylinder(
-                boss_diameter / 2,
-                boss_height,
-                x_pos, y_pos, 0
-            )
-            try:
-                frame = trimesh.boolean.union([frame, boss], engine='manifold')
-            except:
-                frame = trimesh.util.concatenate([frame, boss])
-
-    # Then subtract screw holes from bosses
+    # Subtract screw holes (2 per beam = 6 total)
     for y_pos in hole_y_positions:
         for x_pos in [hole_x_left, hole_x_right]:
             shaft = create_cylinder(
                 FRAME_SCREW_HOLE / 2,
-                boss_height + 1,
-                x_pos, y_pos, -0.5
+                FRAME_RAIL_HEIGHT + 2,
+                x_pos, y_pos, -1
             )
             countersink = create_cylinder(
                 FRAME_COUNTERSINK / 2,
@@ -494,15 +562,15 @@ def generate_cable_tray():
     # Generate main shell (with end walls and cable slots)
     shell = generate_tray_shell()
 
-    # Generate ribs
-    ribs = generate_ribs()
+    # Ribs removed to reduce filament usage
+    # ribs = generate_ribs()
 
     # Generate T-profiles on sides (slide into rail frame)
     rails = generate_tray_rails()
 
     # Combine all solid parts
     print("\nCombining all parts...")
-    all_parts = [shell] + ribs + rails
+    all_parts = [shell] + rails  # No ribs
 
     result = all_parts[0]
     for i, part in enumerate(all_parts[1:], 1):

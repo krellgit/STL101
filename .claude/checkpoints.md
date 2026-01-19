@@ -1,5 +1,90 @@
 # STL101 Checkpoints
 
+## R101-006 - 2026-01-19T22:00:00
+
+**Summary:** Simple Z-bracket for cable tray mounting
+
+**Goal:** Fix mounting system for underdesk cable tray - original T-slot rail frame had geometry issues preventing proper fit.
+
+**Status:** Complete
+
+**Changes:**
+1. Attempted multiple fixes to rail_frame T-slot geometry (tolerance, positioning, L-shaped rails)
+2. Abandoned complex T-slot frame approach due to fundamental geometry conflicts
+3. Created simple Z-bracket design that hooks under T-head overhang
+4. Z-bracket: 15mm top plate, 3.5mm drop (= T-head thickness), 8mm lip
+
+**Files modified:**
+1. UNDERDESK ORGANIZER/generate_z_bracket.py - New simple bracket generator
+2. UNDERDESK ORGANIZER/z_bracket.stl - Generated Z-bracket (print 2-4x)
+3. UNDERDESK ORGANIZER/generate_cable_tray.py - Various T-slot fixes attempted (can revert)
+4. UNDERDESK ORGANIZER/rail_frame.stl - Intermediate iterations (superseded by z_bracket)
+
+**Commits:**
+- None yet (uncommitted changes)
+
+**Key decisions:**
+1. Abandoned T-slot frame: T-profiles centered on 3mm walls meant frame rails couldn't capture them without blocking tray body - geometry fundamentally incompatible
+2. Simple Z-bracket approach: Top screws to desk, vertical drops 3.5mm (T-head thickness), horizontal lip catches T-head overhang
+3. Drop = T-head thickness (0.5mm flat + 3mm chamfer = 3.5mm) so lip is positioned just under the overhang
+4. Bracket orientation: top plate on right, lip extends left to catch outward T-head protrusion
+
+**Blockers:** None
+
+**Next steps:**
+1. Print 2-4 Z-brackets
+2. Test fit with existing tray - T-heads should rest on bracket lips
+3. Screw brackets to desk underside
+4. Verify tray hangs securely
+
+---
+
+## R101-005 - 2026-01-18T12:30:00
+
+**Summary:** Optimized cable tray for material savings and printability
+
+**Goal:** Reduce material usage while maintaining structural integrity and ensuring the T-profile prints as one piece with the wall.
+
+**Status:** Complete
+
+**Changes:**
+1. Reduced wall thickness from 4mm to 3mm (matches T-neck for seamless printing)
+2. Reduced bottom thickness from 3mm to 2mm
+3. Shortened tray length from 220mm to 200mm
+4. Removed ribbed texture to save filament
+5. Increased T-neck height from 2mm to 4mm for better tolerance
+6. Moved screw holes from rails to cross beams (6 total, near rails)
+7. Reduced cable slot size from 50x30mm to 25x20mm
+8. Fixed T-profile orientation (upright T, not sideways)
+9. Fixed frame T-slot to properly subtract channels
+
+**Files modified:**
+1. UNDERDESK ORGANIZER/generate_cable_tray.py - Updated all parameters
+2. UNDERDESK ORGANIZER/cable_tray.stl - Regenerated optimized tray
+3. UNDERDESK ORGANIZER/rail_frame.stl - Regenerated frame with proper T-slots
+
+**Commits:**
+1. 5303295 - Optimize underdesk cable tray for material savings and printability
+
+**Key decisions:**
+1. Wall thickness = T-neck width (3mm) so they print as one continuous piece - no overlap/bonding issues
+2. T-neck height 4mm (was 2mm) for more tolerance in slide-in mechanism
+3. Screw holes on cross beams instead of rails - avoids interference with T-slots
+4. Screws positioned near rails (8mm inset) for better hold
+5. Removed ribs - texture adds material without structural benefit for this design
+6. T-slot clearances: 1mm width clearance, 0.5mm height clearance throughout
+7. Frame rail height 12mm to accommodate 9mm deep T-slot with 3mm solid material above
+
+**Blockers:** None
+
+**Next steps:**
+1. Print both pieces and test fit
+2. Verify T-profile slides smoothly into T-slot
+3. Test 2kg load capacity
+4. Mount to desk and verify cable routing works
+
+---
+
 ## R101-004 - 2026-01-18T02:00:00
 
 **Summary:** Underdesk cable tray with T-slot rail frame mounting

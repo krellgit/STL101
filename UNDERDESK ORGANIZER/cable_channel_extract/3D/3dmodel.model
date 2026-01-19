@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02" xmlns:BambuStudio="http://schemas.bambulab.com/package/2021" xmlns:p="http://schemas.microsoft.com/3dmanufacturing/production/2015/06" requiredextensions="p">
+ <metadata name="Application">BambuStudio-02.04.00.70</metadata>
+ <metadata name="BambuStudio:3mfVersion">1</metadata>
+ <metadata name="CopyRight">&quot;[]&quot;</metadata>
+ <metadata name="Copyright">[]</metadata>
+ <metadata name="CreationDate">2026-01-19</metadata>
+ <metadata name="Description">&amp;lt;p&amp;gt;Stick it with double sided tape under your desk to make them dissapear.&amp;lt;/p&amp;gt;&amp;lt;p&amp;gt;Simply insert all the cables you want in the channel and the lip inside will prevent them from coming out.&amp;lt;/p&amp;gt;&amp;lt;p&amp;gt;Fast print, no supports required and ease of use and install. Compatible with any cable size.&amp;lt;/p&amp;gt;&amp;lt;p&amp;gt;I made them in different length so you can print the ones you need. You can also customize the length in the slicer by cutting them to the desired length.&amp;lt;/p&amp;gt;&amp;lt;p&amp;gt;They are 50mm wide and 30mm thick with ribbles pattern.&amp;lt;/p&amp;gt;&amp;lt;p&amp;gt;&amp;amp;nbsp;&amp;lt;/p&amp;gt;&amp;lt;p&amp;gt;If you liked the model, feel free to boost. It really helps me out!&amp;lt;/p&amp;gt;&amp;lt;p&amp;gt;&amp;amp;nbsp;&amp;lt;/p&amp;gt;</metadata>
+ <metadata name="DesignModelId">USc33239f45ea34e</metadata>
+ <metadata name="DesignProfileId">146001996</metadata>
+ <metadata name="DesignRegion">US</metadata>
+ <metadata name="Designer">kk20100kk</metadata>
+ <metadata name="DesignerCover">2024-02-23_p48kzfcaxj2f.jpg</metadata>
+ <metadata name="DesignerUserId">3401278867</metadata>
+ <metadata name="License">Standard Digital File License</metadata>
+ <metadata name="ModificationDate">2026-01-19</metadata>
+ <metadata name="Origin">original</metadata>
+ <metadata name="ProfileCover">2024-10-28_c61aac1862692.jpg</metadata>
+ <metadata name="ProfileDescription"></metadata>
+ <metadata name="ProfileTitle">0.2mm layer, 2 walls, 15% infill</metadata>
+ <metadata name="ProfileUserId">3401278867</metadata>
+ <metadata name="ProfileUserName">kk20100kk</metadata>
+ <metadata name="Thumbnail_Middle">/Metadata/plate_1.png</metadata>
+ <metadata name="Thumbnail_Small">/Metadata/plate_1_small.png</metadata>
+ <metadata name="Title">Under desk cable organizer channel</metadata>
+ <resources>
+  <object id="2" p:UUID="0000000c-61cb-4c03-9d28-80fed5dfa1dc" type="model">
+   <components>
+    <component p:path="/3D/Objects/object_12.model" objectid="1" p:UUID="000c0000-b206-40ff-9872-83e8017abed1" transform="1 0 0 0 1 0 0 0 1 0 0 0"/>
+   </components>
+  </object>
+ </resources>
+ <build p:UUID="2c7c17d8-22b5-4d84-8835-1976022ea369">
+  <item objectid="2" p:UUID="00000002-b1ec-4553-aec9-835e5b724bb4" transform="1 0 0 0 1 0 0 0 1 127.99999 127.99999 75" printable="1"/>
+ </build>
+</model>

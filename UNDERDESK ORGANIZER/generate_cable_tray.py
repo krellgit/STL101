@@ -17,9 +17,9 @@ import numpy as np
 # ============================================
 
 # Main tray dimensions
-TRAY_LENGTH = 200.0      # mm (along desk, front-to-back openings)
+TRAY_LENGTH = 230.0      # mm (along desk, front-to-back openings)
 TRAY_WIDTH = 120.0       # mm (side to side)
-TRAY_DEPTH = 55.0        # mm (height/depth of tray cavity)
+TRAY_DEPTH = 100.0       # mm (height/depth of tray cavity)
 
 # Wall thickness - matches T-neck width so they print as one piece
 WALL_THICKNESS = 3.0     # mm (same as RAIL_NECK_WIDTH)
